@@ -37,7 +37,7 @@ def get_local_service(
     return LocalService(config)
 
 def get_transcription_service(
-        config: Annotated[Config, Depends(get_local_service)],
+        config: Annotated[Config, Depends(get_config)],
         file_service: Annotated[FileService, Depends(get_file_service)],
         audio_service: Annotated[AudioService, Depends(get_audio_service)],
         oss_service: Annotated[OssService, Depends(get_oss_service)],

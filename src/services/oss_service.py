@@ -1,9 +1,11 @@
+import logging
 import os
 import asyncio
 from minio import Minio
 from minio.error import S3Error
 from src.config.config import Config
 
+logger = logging.getLogger(__name__)
 
 class OssService:
 
@@ -28,15 +30,21 @@ class OssService:
         except S3Error as e:
             print(f"Error creating bucket: {e}")
 
-    def _upload_file_sync(self, local_path, object_name=None):
+    def _upload_file_sync(self, local_path, organize_code, conversation_id, object_name=None):
+        base_file_name = os.path.basename(local_path)
         if object_name is None:
-            object_name = os.path.basename(local_path)
+            object_name = os.path.join(organize_code, conversation_id, base_file_name)
 
-        self.minio_client.fput_object(
-            self.bucket_name,
-            self.path + object_name,
-            local_path
-        )
+        try:
+            self.minio_client.fput_object(
+                bucket_name=self.bucket_name,
+                object_name=self.path + object_name,
+                file_path=local_path,
+            )
+        except Exception as e:
+            print(f"Error uploading file: {e}")
+            logger.info(f"Error uploading file: {e}")
+            raise
 
     def _download_file_sync(self, object_name):
         response = self.minio_client.get_object(
@@ -53,14 +61,15 @@ class OssService:
             response.close()
             response.release_conn()
 
-    async def upload_file(self, local_path, object_name=None):
+    async def upload_file(self, local_path, organize_code, conversation_id, object_name=None):
         try:
             local_file_path = await asyncio.to_thread(
-                self._upload_file_sync, local_path, object_name
+                self._upload_file_sync, local_path, organize_code, conversation_id, object_name
             )
-            return local_file_path
         except S3Error:
             raise
+
+        return local_file_path
 
     async def download_file(self, object_name=None):
         try:

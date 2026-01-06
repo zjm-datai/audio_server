@@ -29,7 +29,7 @@ class TranscriptionService:
         try:
             local_path = await self.local_service.save_file(file, organize_code, conversation_id)
 
-            await self.oss_service.upload_file(local_path)
+            await self.oss_service.upload_file(local_path, organize_code, conversation_id)
 
             audio_file_url = f"{self.config.FILE_DOWNLOAD_URL}/file/{organize_code}-{conversation_id}/{file.filename}"
             transcription_content = await self.audio_service.transcribe(audio_file_url)
