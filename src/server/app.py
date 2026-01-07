@@ -5,6 +5,9 @@ from starlette.middleware.cors import CORSMiddleware
 
 from src.config import config
 from src.server.db import init_db
+from src.server.utils import setup_logging
+
+setup_logging(config=config)
 
 __version__ = "1.0"
 

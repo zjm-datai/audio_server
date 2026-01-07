@@ -1,10 +1,11 @@
 import os
-
+import logging
 from fastapi import UploadFile
 
 from src.config.config import Config
 from src.services.errors import FileFoundError
 
+logger = logging.getLogger(__name__)
 
 class LocalService:
 

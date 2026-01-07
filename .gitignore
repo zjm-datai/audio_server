@@ -1,4 +1,12 @@
 
+.idea
+
+migration/
+alembic.ini
+
 .venv
 .env
+
 storage
+
+__pycache__/
