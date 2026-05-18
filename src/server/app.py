@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from src.config import config
-from src.server.db import init_db
+from src.server.db import dispose_engine, init_db
 from src.server.utils import setup_logging
 
 setup_logging(config=config)
@@ -17,6 +17,7 @@ init_db(config.DATABASE_URL)
 async def lifespan(app: FastAPI):
 
     yield
+    await dispose_engine()
 
 app = FastAPI(
     title="audio_server",

@@ -12,6 +12,10 @@ async def get_session():
     async with AsyncSession(_engine) as session:
         yield session
 
+async def dispose_engine():
+    if _engine is not None:
+        await _engine.dispose()
+
 def init_db(db_url: str):
     global _engine
     if _engine is None:
@@ -21,6 +25,11 @@ def init_db(db_url: str):
             db_url = re.sub(r'^sqlite://', 'sqlite+aiosqlite://', db_url)
         elif db_url.startswith("postgresql://"):
             db_url = re.sub(r'^postgresql://', 'postgresql+asyncpg://', db_url)
+            connect_args = {
+                "server_settings": {
+                    "application_name": "audio_server",
+                },
+            }
         elif db_url.startswith("mysql://"):
             db_url = re.sub(r'^mysql://', 'mysql+asyncmy://', db_url)
         else:
@@ -29,6 +38,8 @@ def init_db(db_url: str):
         _engine = create_async_engine(
             db_url,
             echo=True,
+            pool_pre_ping=True,
+            pool_recycle=1800,
             pool_size=5,
             max_overflow=10,
             pool_timeout=30,
