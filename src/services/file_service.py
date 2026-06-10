@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError, SQLAlchemyError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -15,9 +14,9 @@ DB_RETRY_DELAY_SECONDS = 0.2
 
 
 class FileService:
-    def __init__(self, config: Config, session_factory: async_sessionmaker[AsyncSession]):
+    def __init__(self, config: Config, session: AsyncSession):
         self.config = config
-        self.session_factory = session_factory
+        self.session = session
 
     async def create_audio_file(
         self,
@@ -33,20 +32,17 @@ class FileService:
             "file_url": file_url,
             "transcription_content": transcription_content,
         }
-        audio_file_id = AudioFile(**audio_file_data).id
+        audio_file = AudioFile(**audio_file_data)
+        audio_file_id = audio_file.id
 
         for attempt in range(1, DB_RETRY_ATTEMPTS + 1):
-            audio_file = AudioFile(
-                id=audio_file_id,
-                **audio_file_data,
-            )
+            self.session.add(audio_file)
             try:
-                async with self.session_factory() as session:
-                    session.add(audio_file)
-                    await session.commit()
-                    await session.refresh(audio_file)
+                await self.session.commit()
+                await self.session.refresh(audio_file)
                 return audio_file.id
             except SQLAlchemyError as exc:
+                await self.session.rollback()
                 if not self._is_retryable_db_error(exc) or attempt == DB_RETRY_ATTEMPTS:
                     raise
 
@@ -58,6 +54,10 @@ class FileService:
                     exc_info=True,
                 )
                 await asyncio.sleep(DB_RETRY_DELAY_SECONDS)
+                audio_file = AudioFile(
+                    id=audio_file_id,
+                    **audio_file_data,
+                )
 
     @staticmethod
     def _is_retryable_db_error(exc: SQLAlchemyError) -> bool:

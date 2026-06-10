@@ -1,9 +1,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, UploadFile, HTTPException
-from fastapi.params import File, Depends, Form
-from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi.params import Body, File, Depends, Form
+from pydantic import BaseModel, Field
 from starlette import status
 
 from src.server.deps import get_transcription_service
@@ -33,13 +32,8 @@ async def transcription(
         transcription_content, file_id = await service.get_transcription(file, organize_code, conversation_id)
     except FileFoundError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="database temporarily unavailable",
-        ) from e
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return TranscriptionResponse(transcription=transcription_content, file_id=file_id)
 

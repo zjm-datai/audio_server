@@ -1,9 +1,5 @@
-import logging
-
 import httpx
 from src.config.config import Config
-
-logger = logging.getLogger(__name__)
 
 
 class AudioService:
@@ -23,7 +19,7 @@ class AudioService:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "audio", "audio_url": file_url},
+                        {"type": "audio_url", "audio_url": {"url": file_url}},
                         {"type": "text", "text": "直接转录为文本"},
                     ],
                 }
@@ -41,8 +37,6 @@ class AudioService:
             pool=5.0,
         )
 
-        logger.info("STT request payload=%s", payload)
-
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
                 url=self.config.STT_API_URL,
@@ -50,14 +44,6 @@ class AudioService:
                 json=payload,
             )
 
-        logger.info(
-            "STT response url=%s status_code=%s reason=%s headers=%s body=%s",
-            response.url,
-            response.status_code,
-            response.reason_phrase,
-            dict(response.headers),
-            response.text,
-        )
         response.raise_for_status()
 
         data = response.json()
