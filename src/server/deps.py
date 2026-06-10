@@ -1,10 +1,9 @@
 from typing import Annotated
 
 from fastapi.params import Depends
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.config.config import Config
-from src.server.db import get_session
+from src.server.db import get_sessionmaker
 from src.services.audio_service import AudioService
 from src.services.file_service import FileService
 from src.services.local_service import LocalService
@@ -21,10 +20,9 @@ def get_oss_service(
     return OssService(config)
 
 def get_file_service(
-        config: Annotated[Config, Depends(get_config)],
-        session: Annotated[AsyncSession, Depends(get_session)]
+        config: Annotated[Config, Depends(get_config)]
 ):
-    return FileService(config, session)
+    return FileService(config, get_sessionmaker())
 
 def get_audio_service(
         config: Annotated[Config, Depends(get_config)]
