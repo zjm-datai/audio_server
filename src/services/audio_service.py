@@ -1,5 +1,9 @@
+import logging
+
 import httpx
 from src.config.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class AudioService:
@@ -44,6 +48,14 @@ class AudioService:
                 json=payload,
             )
 
+        logger.info(
+            "STT response url=%s status_code=%s reason=%s headers=%s body=%s",
+            response.url,
+            response.status_code,
+            response.reason_phrase,
+            dict(response.headers),
+            response.text,
+        )
         response.raise_for_status()
 
         data = response.json()
