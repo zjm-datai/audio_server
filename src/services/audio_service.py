@@ -23,7 +23,7 @@ class AudioService:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "audio_url", "audio_url": {"url": file_url}},
+                        {"type": "audio", "audio_url": file_url},
                         {"type": "text", "text": "直接转录为文本"},
                     ],
                 }
