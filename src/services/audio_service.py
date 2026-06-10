@@ -23,8 +23,8 @@ class AudioService:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "直接转录为文本"},
                         {"type": "audio_url", "audio_url": {"url": file_url}},
+                        {"type": "text", "text": "直接转录为文本"},
                     ],
                 }
             ],
@@ -40,6 +40,8 @@ class AudioService:
             write=10.0,
             pool=5.0,
         )
+
+        logger.info("STT request payload=%s", payload)
 
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
