@@ -1,15 +1,21 @@
 import re
 
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 _engine = None
+_sessionmaker = None
 
 def get_engine():
     return _engine
 
+def get_sessionmaker():
+    if _sessionmaker is None:
+        raise RuntimeError("Database has not been initialized")
+    return _sessionmaker
+
 async def get_session():
-    async with AsyncSession(_engine) as session:
+    async with get_sessionmaker()() as session:
         yield session
 
 async def dispose_engine():
@@ -17,7 +23,7 @@ async def dispose_engine():
         await _engine.dispose()
 
 def init_db(db_url: str):
-    global _engine
+    global _engine, _sessionmaker
     if _engine is None:
         connect_args = {}
         if db_url.startswith("sqlite://"):
@@ -44,4 +50,9 @@ def init_db(db_url: str):
             max_overflow=10,
             pool_timeout=30,
             connect_args=connect_args,
+        )
+        _sessionmaker = async_sessionmaker(
+            _engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
         )
